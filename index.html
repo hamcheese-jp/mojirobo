@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<script>
+(function () {
+  var API = "https://script.google.com/macros/s/AKfycbylTjVk6jSVJ-XCqp3ViOFURqCMSwCJujenagzzmpuVXrVoKzAS-AB0QVOhjBtV2Lm8/exec";
+  function runner(ok, ng, user) {
+    return new Proxy({}, { get: function (_, name) {
+      if (name === 'withSuccessHandler') return function (h) { return runner(h, ng, user); };
+      if (name === 'withFailureHandler') return function (h) { return runner(ok, h, user); };
+      if (name === 'withUserObject') return function (o) { return runner(ok, ng, o); };
+      return function () {
+        var args = Array.prototype.slice.call(arguments);
+        // text/plain にして、事前の確認（プリフライト）なしで GAS に届くようにする
+        fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ rpc: name, args: args }) })
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            if (j && j.ok) { if (ok) ok(j.result, user); }
+            else if (ng) ng(new Error((j && j.error) || 'エラー'), user);
+          })
+          .catch(function (e) { if (ng) ng(e, user); });
+      };
+    } });
+  }
+  window.google = { script: { run: runner(null, null, undefined) } };
+})();
+</script>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#07081a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="もじろぼ！">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>もじろぼ！</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07081a;--panel:#11132b;--line:#2c2f5c;--neon:#4de3ff;--neon2:#ff4dd2;--gold:#ffd35a;--txt:#e9ecff;--sub:#8d93c7}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--txt);font-family:"Noto Sans JP",sans-serif;min-height:100%}
+body{background:radial-gradient(ellipse at top,#1b1450 0%,#07081a 60%) fixed}
+button{font-family:"Dela Gothic One","Noto Sans JP",sans-serif;cursor:pointer;border:none}
+#app{max-width:920px;margin:0 auto;padding:12px}
+.screen{display:none}.screen.active{display:block}
+.logo{font-family:"Dela Gothic One",sans-serif;text-align:center;font-size:clamp(28px,7vw,52px);letter-spacing:2px;
+  background:linear-gradient(180deg,#fff 0%,#9ff3ff 45%,#2a8cff 55%,#c26bff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 10px rgba(77,227,255,.6)) drop-shadow(0 3px 0 #000);margin:6px 0 2px}
+.logo span{display:block;font-size:.32em;letter-spacing:6px;color:var(--neon2);-webkit-text-fill-color:var(--neon2);filter:none}
+.buildWrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+@media (max-width:700px){.buildWrap{grid-template-columns:1fr}}
+.card{background:linear-gradient(180deg,#151838,#0d0f24);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:0 0 20px rgba(77,227,255,.08) inset}
+#pv{width:100%;aspect-ratio:1/1.05;display:block;border-radius:10px}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.slot{display:flex;flex-direction:column;align-items:center;gap:3px}
+.slot.empty{visibility:hidden}
+.slot label{font-size:12px;color:var(--sub);font-weight:900}
+.slot input{width:100%;max-width:92px;aspect-ratio:1;text-align:center;font-size:40px;font-weight:900;font-family:"Noto Sans JP",sans-serif;
+  background:#060716;color:#fff;border:2px solid var(--line);border-radius:12px;outline:none;transition:.15s}
+.slot input:focus{border-color:var(--neon);box-shadow:0 0 14px rgba(77,227,255,.6)}
+.slot .el{font-size:11px;font-weight:900;padding:1px 8px;border-radius:99px;background:#222;min-height:16px}
+.btns{display:flex;gap:8px;margin-top:12px}
+.btns button{flex:1;padding:12px 6px;border-radius:12px;font-size:18px;color:#fff;background:#2a2e5e;box-shadow:0 4px 0 #15173a}
+.btns button:active{transform:translateY(3px);box-shadow:0 1px 0 #15173a}
+button.main{background:linear-gradient(180deg,#ff5fd6,#a425ff);box-shadow:0 4px 0 #5a128f,0 0 18px rgba(255,77,210,.5)!important}
+button.main:disabled{filter:grayscale(1) brightness(.6);cursor:not-allowed}
+.hint{font-size:12px;color:var(--sub);margin-top:8px;line-height:1.6}
+#info{margin-top:12px}
+.infoHead{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+.rank{font-family:"Dela Gothic One";font-size:34px;line-height:1;padding:2px 12px;border-radius:10px;background:#000;border:2px solid var(--gold);color:var(--gold);text-shadow:0 0 10px var(--gold)}
+.rname{font-family:"Dela Gothic One";font-size:20px}
+.tag{font-size:12px;font-weight:900;padding:3px 9px;border-radius:99px;background:#24285a;color:#cfd4ff}
+.statGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 14px}
+@media (max-width:520px){.statGrid{grid-template-columns:1fr}}
+.st{display:grid;grid-template-columns:78px 1fr 54px;align-items:center;gap:6px;font-size:12px;font-weight:700}
+.st .bar{height:8px;background:#05060f;border-radius:99px;overflow:hidden;border:1px solid #23264d}
+.st .bar i{display:block;height:100%;background:linear-gradient(90deg,#2a8cff,#4de3ff,#b6ffff)}
+.st b{text-align:right;font-family:"Dela Gothic One";font-weight:400}
+.skills{margin-top:10px;display:grid;gap:5px}
+.sk{display:grid;grid-template-columns:44px 1fr;gap:8px;align-items:center;background:#0a0c20;border:1px solid #20234a;border-radius:10px;padding:6px 8px}
+.sk .ch{font-size:26px;font-weight:900;text-align:center}
+.sk .nm{font-weight:900;font-size:14px}
+.sk .ds{font-size:11px;color:var(--sub)}
+.sk .kd{font-size:10px;padding:1px 6px;border-radius:6px;margin-right:4px;color:#000;font-weight:900}
+.kd.atk{background:#ff8a5a}.kd.sup{background:#5affb0}.kd.pas{background:#b9a6ff}.kd.ult{background:var(--gold)}
+#battle canvas{width:100%;display:block;border-radius:12px;border:1px solid var(--line);background:#000;touch-action:manipulation}
+.bbar{display:flex;gap:8px;margin-top:8px;justify-content:flex-end}
+.bbar button{padding:8px 14px;border-radius:10px;background:#2a2e5e;color:#fff;font-size:15px}
+#log{font-size:12px;color:var(--sub);height:84px;overflow:hidden;margin-top:6px;line-height:1.5;font-weight:700}
+.modal{position:fixed;inset:0;background:rgba(0,0,10,.78);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
+.modal.hidden{display:none}
+.box{width:min(560px,100%);max-height:90vh;overflow:auto;background:linear-gradient(180deg,#191c44,#0b0d22);border:2px solid var(--neon);border-radius:16px;padding:18px;box-shadow:0 0 40px rgba(77,227,255,.35)}
+.box h2{font-family:"Dela Gothic One";font-weight:400;text-align:center;font-size:32px;margin-bottom:6px}
+.box .big{text-align:center;font-family:"Dela Gothic One";font-size:22px;color:var(--gold);margin:8px 0}
+.box input{width:100%;padding:10px;font-size:16px;border-radius:10px;border:2px solid var(--line);background:#05060f;color:#fff;font-weight:700}
+.box .row{display:flex;gap:8px;margin-top:10px}
+.box .row button{flex:1;padding:11px;border-radius:10px;color:#fff;background:#2a2e5e;font-size:15px}
+table.rk{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+table.rk td,table.rk th{padding:5px 4px;border-bottom:1px solid #23264d;text-align:left}
+table.rk th{color:var(--sub);font-size:11px}
+table.rk td.c{font-weight:900;font-size:16px;letter-spacing:1px}
+.sub{display:block;margin:14px auto 0;padding:9px 20px;border-radius:99px;background:#1d2050;color:#fff;font-size:14px}
+</style>
+</head>
+<body>
+<div id="app">
+  <section id="build" class="screen active">
+    <h1 class="logo">もじろぼ！<span>MOJI ROBO BATTLE</span></h1>
+    <div class="buildWrap">
+      <div class="card"><canvas id="pv"></canvas></div>
+      <div class="card">
+        <div class="slots" id="slots"></div>
+        <div class="btns">
+          <button id="rndBtn">🎲 ランダム</button>
+          <button id="goBtn" class="main" disabled>合体!!</button>
+        </div>
+        <p class="hint">好きな文字を1つずつ入れてね（漢字・ひらがな・英字・絵文字もOK）。<br>
+        合体のしかた・ステータス・技はぜんぶ文字で決まる。同じ文字なら同じロボになるよ。<br>
+        CPUと自動でバトル。どこまで勝ち進めるか挑戦しよう！</p>
+      </div>
+    </div>
+    <div class="card" id="info"></div>
+    <button id="rankBtn" class="sub">🏆 ランキングを見る</button>
+  </section>
+
+  <section id="battle" class="screen">
+    <canvas id="cv"></canvas>
+    <div class="bbar">
+      <button id="spdBtn">▶ ×1</button>
+      <button id="muteBtn">🔊</button>
+    </div>
+    <div id="log"></div>
+  </section>
+</div>
+<div id="modal" class="modal hidden"><div class="box" id="mbox"></div></div>
+
+<script>
+'use strict';
+/* ================= utilities ================= */
+const $ = s => document.querySelector(s);
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const rnd = (a, b) => a + Math.random() * (b - a);
+const easeOutBack = t => { const c = 1.70158; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+const easeInOut = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+const easeOut = t => 1 - (1 - t) * (1 - t);
+function hh(s) { // string -> [0,1) deterministic
+  let x = 2166136261;
+  for (const ch of s) { x ^= ch.codePointAt(0); x = Math.imul(x, 16777619); }
+  x ^= x >>> 13; x = Math.imul(x, 0x5bd1e995); x ^= x >>> 15; x = Math.imul(x, 0x27d4eb2d); x ^= x >>> 16;
+  return (x >>> 0) / 4294967296;
+}
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const FONT = '"Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif';
+const FONT2 = '"Dela Gothic One","Noto Sans JP",sans-serif';
+
+/* ================= game data ================= */
+const PARTS = [
+  { k: 'head', n: '頭' }, { k: 'body', n: '体' }, { k: 'rarm', n: '右腕' },
+  { k: 'larm', n: '左腕' }, { k: 'rleg', n: '右足' }, { k: 'lleg', n: '左足' }];
+const ELEM = [
+  { n: '炎', c: '#ff5a2a', c2: '#ffd27a' }, { n: '水', c: '#2a9dff', c2: '#bfeaff' },
+  { n: '雷', c: '#ffd400', c2: '#fffbd0' }, { n: '風', c: '#2fe08a', c2: '#d0ffe4' },
+  { n: '光', c: '#ff8ef0', c2: '#ffffff' }, { n: '闇', c: '#9d4bff', c2: '#e6d0ff' },
+  { n: '？', c: '#666a88', c2: '#b9bdd8' }];
+const EDICT = [
+  '炎火焔焰熱紅赤灼爆焦烈燃煉朱紅陽日夏',
+  '水氷海波青雪冷泉滝流蒼凍霧雨湖冬河潮',
+  '雷電閃轟震迅撃鳴稲弾速',
+  '風嵐翔空飛疾翼旋颯鷹緑森木葉鳥春',
+  '光聖天神白輝煌星金皇王希月明愛',
+  '闇黒影魔冥鬼死夜獄邪呪滅骸毒裏'];
+function elemOf(ch) {
+  if (!ch || ch === '？') return 6;
+  for (let i = 0; i < 6; i++) if (EDICT[i].includes(ch)) return i;
+  return Math.floor(hh(ch + 'elem') * 6);
+}
+// 炎>風>雷>水>炎 / 光<->闇
+const BEATS = { 0: 3, 3: 2, 2: 1, 1: 0, 4: 5, 5: 4 };
+function adv(a, d) { if (a > 5 || d > 5) return 1; if (BEATS[a] === d) return 1.3; if (BEATS[d] === a && a < 4) return .8; return 1; }
+
+const STAT_DEF = [
+  { k: 'hp', n: 'HP', w: [1, 4, 1, 1, 1.5, 1.5], min: 240, max: 520, f: v => Math.round(v) },
+  { k: 'atk', n: '攻撃力', w: [.5, 1, 4, 3, 1, 1], min: 30, max: 72, f: v => Math.round(v) },
+  { k: 'def', n: '防御力', w: [1, 4, 1.5, 1.5, 1, 1], min: 8, max: 42, f: v => Math.round(v) },
+  { k: 'spd', n: '素早さ', w: [1, .5, 1, 1, 4, 4], min: 18, max: 52, f: v => Math.round(v) },
+  { k: 'crit', n: '会心率', w: [4, .5, 1.5, 1.5, .5, .5], min: .04, max: .30, f: v => Math.round(v * 100) + '%' },
+  { k: 'critDmg', n: '会心威力', w: [3, .5, 2, 2, .5, .5], min: 1.5, max: 2.3, f: v => '×' + v.toFixed(2) },
+  { k: 'acc', n: '命中', w: [4, 1, 1, 1, .5, .5], min: .86, max: 1.0, f: v => Math.round(v * 100) + '%' },
+  { k: 'eva', n: '回避', w: [2, .5, .5, .5, 3, 3], min: .02, max: .22, f: v => Math.round(v * 100) + '%' },
+  { k: 'spPow', n: '必殺威力', w: [1, 1, 2, 4, 1, 1], min: 1.8, max: 3.2, f: v => '×' + v.toFixed(2) },
+  { k: 'enGain', n: 'EN回復', w: [2, 3, 1, 1, 1, 1], min: 20, max: 40, f: v => Math.round(v) },
+  { k: 'counter', n: '反撃率', w: [.5, 2, 2, 2, .5, .5], min: 0, max: .18, f: v => Math.round(v * 100) + '%' },
+  { k: 'combo', n: '連撃率', w: [.5, .5, 3, 3, 1, 1], min: 0, max: .22, f: v => Math.round(v * 100) + '%' },
+  { k: 'resist', n: '状態耐性', w: [3, 3, .5, .5, 1, 1], min: 0, max: .45, f: v => Math.round(v * 100) + '%' },
+  { k: 'pierce', n: '貫通', w: [1, .5, 3, 3, 1, 1], min: 0, max: .30, f: v => Math.round(v * 100) + '%' }];
+
+// P: 各部品の大きさ [幅, 高さ] (S単位)、腕・足の角度、肩の高さ
+const TYPES = [
+  { n: 'ヒト型', d: 'バランス型。全能力+5%・EN回復+5',
+    P: { head: [.8, .72], body: [1.25, 1.3], arm: [.55, 1.15], leg: [.55, 1.05], armR: .16, legR: .04, sh: .2 },
+    mod: R => { ['hp', 'atk', 'def', 'spd'].forEach(k => R[k] *= 1.05); R.enGain += 5; } },
+  { n: '重装型', d: 'HP+20%・防御+30%・素早さ-20%',
+    P: { head: [.68, .55], body: [1.6, 1.35], arm: [.78, 1.15], leg: [.72, .95], armR: .08, legR: 0, sh: .18 },
+    mod: R => { R.hp *= 1.2; R.def *= 1.3; R.spd *= .8; } },
+  { n: '飛行型', d: '回避+8%・素早さ+20%・防御-15%',
+    P: { head: [.75, .7], body: [1.1, 1.2], arm: [.55, 1.45], leg: [.45, 1.05], armR: Math.PI - .7, legR: -.14, sh: .15, fly: true },
+    mod: R => { R.eva += .08; R.spd *= 1.2; R.def *= .85; } },
+  { n: '獣型', d: '攻撃+15%・素早さ+15%・連撃+8%・HP-10%',
+    P: { head: [.85, .75], body: [1.9, 1.0], arm: [.45, .95], leg: [.45, .95], beast: true },
+    mod: R => { R.atk *= 1.15; R.spd *= 1.15; R.combo += .08; R.hp *= .9; } },
+  { n: '細身型', d: '素早さ+25%・会心+6%・HP-15%',
+    P: { head: [.62, .62], body: [.85, 1.45], arm: [.4, 1.35], leg: [.42, 1.35], armR: .08, legR: .02, sh: .18 },
+    mod: R => { R.spd *= 1.25; R.crit += .06; R.hp *= .85; } },
+  { n: '巨腕型', d: '攻撃+25%・反撃+8%・素早さ-10%',
+    P: { head: [.58, .52], body: [1.05, 1.1], arm: [1.0, 1.45], leg: [.5, .95], armR: .24, legR: .03, sh: .15 },
+    mod: R => { R.atk *= 1.25; R.counter += .08; R.spd *= .9; } },
+  { n: '多重装甲型', d: '防御+15%・耐性+15%・状態異常に強い',
+    P: { head: [.8, .7], body: [1.3, 1.3], arm: [.85, .85], leg: [.6, 1.05], armR: .75, legR: .12, sh: .25 },
+    mod: R => { R.def *= 1.15; R.resist += .15; } }];
+
+const ELEM_SHOT = ['バーニングショット', 'アイスバレット', 'サンダーボルト', 'ゲイルカッター', 'フラッシュレイ', 'カースブレイド'];
+const ELEM_EFF = ['burn', 'freeze', 'para', 'knock', 'blind', 'poison'];
+const ULT = ['インフェルノ・バスター', 'アブソリュート・ゼロ', 'ギガ・ライトニング', 'テンペスト・ストーム', 'シャイニング・ノヴァ', 'ダークネス・エンド', 'ファイナル・ブレイク'];
+const SUFFIX = ['ガイオー', 'カイザー', 'ゼノン', 'ダイン', 'マキシマム', 'ブレイバー', 'オーガ', 'ゼロ', 'ギア', 'フォース', 'ザウルス', 'マグナ'];
+const EFF_NAME = { burn: '炎上', freeze: '凍結', para: 'マヒ', knock: '吹き飛ばし', blind: '暗闇', poison: '毒' };
+
+const SKILLS = {
+  atk: [
+    { id: 'rush', n: () => 'メガトンラッシュ', anim: 'melee', hits: 4, mult: .42, cd: 3, ds: '4連続攻撃 (各×0.42)' },
+    { id: 'rocket', n: () => 'ロケットパンチ', anim: 'shot', shot: 'rocket', hits: 1, mult: 1.55, sure: true, cd: 3, ds: '必中の飛ぶ拳 ×1.55' },
+    { id: 'crush', n: () => 'クラッシャー', anim: 'melee', hits: 1, mult: 1.3, eff: 'defDown', cd: 3, ds: '×1.3 + 相手の防御ダウン' },
+    { id: 'eshot', n: e => ELEM_SHOT[e] || 'エナジーショット', anim: 'shot', shot: 'orb', hits: 1, mult: 1.15, effElem: true, cd: 3, ds: '×1.15 + 属性の状態異常' },
+    { id: 'drain', n: () => 'エナジードレイン', anim: 'melee', hits: 1, mult: 1.1, drain: .6, cd: 3, ds: '×1.1 与ダメの60%回復' },
+    { id: 'pile', n: () => 'パイルバンカー', anim: 'melee', hits: 1, mult: 1.45, pierceAll: true, cd: 4, ds: '防御を80%無視 ×1.45' },
+    { id: 'missile', n: () => 'ミサイル乱射', anim: 'shot', shot: 'missile', hits: 3, mult: .55, cd: 3, ds: '3発の追尾弾 (各×0.55)' },
+    { id: 'spin', n: () => 'スピンキック', anim: 'melee', hits: 1, mult: 1.25, eff: 'knock', cd: 2, ds: '×1.25 + 相手の行動を遅らせる' },
+    { id: 'quake', n: () => 'グランドクエイク', anim: 'shot', shot: 'quake', hits: 1, mult: 1.2, eff: 'para', effRate: .4, cd: 4, ds: '×1.2 + 40%でマヒ' }],
+  sup: [
+    { id: 'repair', n: () => 'リペアシステム', anim: 'buff', col: '#5aff9c', cd: 4, ds: 'HPを25%回復' },
+    { id: 'barrier', n: () => 'バリアフィールド', anim: 'buff', col: '#4dc3ff', cd: 4, ds: '最大HP20%のシールド' },
+    { id: 'boost', n: () => 'オーバーブースト', anim: 'buff', col: '#ff6a3d', cd: 5, ds: '3ターン攻撃力+35%' },
+    { id: 'accel', n: () => 'アクセルモード', anim: 'buff', col: '#3dffcf', cd: 5, ds: '3ターン素早さ+40%・回避UP' },
+    { id: 'lockon', n: () => 'ロックオン', anim: 'buff', col: '#ff3d6a', cd: 4, ds: '次の攻撃が必中＆会心' },
+    { id: 'jam', n: () => 'ジャミング', anim: 'buff', col: '#c78bff', cd: 4, ds: '相手を3ターン暗闇(命中DOWN)' },
+    { id: 'charge', n: () => 'エネルギー充填', anim: 'buff', col: '#ffd35a', cd: 4, ds: 'ENを50回復' },
+    { id: 'cleanse', n: () => 'リフレッシュ', anim: 'buff', col: '#ffffff', cd: 4, ds: '状態異常を解除し少し回復' }],
+  pas: [
+    { id: 'regen', n: () => '自己修復機能', ds: '毎ターンHP3%回復' },
+    { id: 'counterArmor', n: () => '反撃装甲', ds: '反撃率+15%' },
+    { id: 'wall', n: () => '鉄壁装甲', ds: '受けるダメージ-12%' },
+    { id: 'guts', n: () => '根性回路', ds: '1度だけHP1で耐える' },
+    { id: 'reactor', n: () => '加速炉', ds: 'EN回復+50%' },
+    { id: 'berserk', n: () => '狂戦士モード', ds: 'HP35%以下で攻撃×1.5' },
+    { id: 'phantom', n: () => '分身ホログラム', ds: '回避+7%' },
+    { id: 'hunter', n: () => '弱点看破', ds: '会心率+8%・会心威力+0.3' },
+    { id: 'thorn', n: () => 'トゲ装甲', ds: '近接攻撃を受けると10%反射' }]
+};
+// category weights per part: [atk, sup, pas]
+const CAT_W = [[.2, .5, .3], [.1, .3, .6], [.75, .15, .1], [.75, .15, .1], [.45, .25, .3], [.45, .25, .3]];
+function pickSkill(ch, i, elem) {
+  const r = hh(ch + '#skill' + i), w = CAT_W[i];
+  const cat = r < w[0] ? 'atk' : r < w[0] + w[1] ? 'sup' : 'pas';
+  const pool = SKILLS[cat];
+  const def = pool[Math.floor(hh(ch + '#pick' + i) * pool.length)];
+  const nm = def.n(elem);
+  return Object.assign({}, def, { kind: cat, part: i, elem, ch, name: cat === 'pas' ? nm : `「${ch}」${nm}`, cdMax: def.cd || 0 });
+}
+
+const RANKS = [[870, 'SS'], [820, 'S'], [773, 'A'], [724, 'B'], [688, 'C'], [0, 'D']];
+function calcPower(R) {
+  let p = R.hp * .22 + R.atk * 2.2 + R.def * 2 + R.spd * 2 + R.crit * 250 + (R.critDmg - 1.5) * 90 + (R.acc - .86) * 250 +
+    R.eva * 320 + R.spPow * 22 + R.enGain * 1.4 + R.counter * 220 + R.combo * 220 + R.resist * 70 + R.pierce * 150;
+  p += R.skills.filter(s => s.kind !== 'pas').length * 6 + R.skills.filter(s => s.kind === 'pas').length * 9;
+  return Math.round(p);
+}
+
+// 字形ボーナス: 文字の形がステータスに影響
+function shapeBonus(R) {
+  const g = R.chars.map(glyphInfo), B = R.shapeBonus = [];
+  const pct = v => (v >= 0 ? '+' : '') + Math.round(v * 100) + '%';
+  const add = (i, why, k, v, txt) => { if (Math.abs(v) < .02) return; B.push(`${PARTS[i].n}「${R.chars[i]}」${why}→${txt}${pct(v)}`); };
+  // 胴体: 画数(インク量)が多いほど硬い
+  const fb = clamp((g[1].fill - .55) * 2.4, -.15, .22);
+  R.def *= 1 + fb; R.hp *= 1 + fb * .5; add(1, fb >= 0 ? '画数が多くて重厚' : '線が少なく軽量', 'def', fb, '防御');
+  // 腕: 太い字ほどパワー
+  const fa = clamp(((g[2].fill + g[3].fill) / 2 - .55) * 2, -.12, .18);
+  R.atk *= 1 + fa; add(fa >= 0 ? 2 : 3, fa >= 0 ? '腕の字が太い' : '腕の字が細い', 'atk', fa, '攻撃');
+  // 足: 縦長の字ほど速い
+  const asp = (g[4].aspect + g[5].aspect) / 2, fs = clamp((1 - asp) * 2.5, -.12, .2);
+  R.spd *= 1 + fs; add(4, fs >= 0 ? '足の字が縦長' : '足の字が横広', 'spd', fs, '素早さ');
+  // 重量: 6文字ぜんぶの画数（インク量）の合計。重いほど遅く、よけにくい
+  const avg = g.reduce((a, x) => a + x.fill, 0) / 6;
+  const wt = clamp((avg - .52) * 3.2, -.28, .28);
+  R.weight = Math.round(avg * 6 * 40);
+  R.spd *= 1 - wt * .85; R.eva = Math.max(0, R.eva - wt * .12);
+  if (Math.abs(wt) >= .02) B.push(`総重量${R.weight}t ${wt > 0 ? '重い' : '軽い'}→素早さ${pct(-wt * .85)}・回避${wt > 0 ? '-' : '+'}${Math.round(Math.abs(wt) * 12)}%`);
+  // 頭: 字が詰まっているほど精密
+  const fh = clamp((g[0].density - .6) * .35, -.04, .05);
+  R.crit += fh; R.acc = Math.min(1, R.acc + fh * .5); add(0, fh >= 0 ? '頭の字が緻密' : '頭の字がすっきり', 'crit', fh, '会心');
+}
+function buildRobot(chars) {
+  const elems = chars.map(elemOf);
+  const R = { chars: [...chars], elems };
+  for (const sd of STAT_DEF) {
+    let sw = 0, sv = 0;
+    sd.w.forEach((w, i) => { sw += w; sv += w * hh(chars[i] + '|' + sd.k + '|' + i); });
+    const m = clamp(.5 + (sv / sw - .5) * 1.9);
+    R[sd.k] = sd.min + (sd.max - sd.min) * m;
+  }
+  shapeBonus(R);
+  const key = chars.join('');
+  R.typeIdx = Math.floor(hh(key + '#type') * TYPES.length);
+  R.type = TYPES[R.typeIdx];
+  R.type.mod(R);
+  // element synergy
+  const cnt = [0, 0, 0, 0, 0, 0, 0]; elems.forEach(e => cnt[e]++);
+  let top = 0; for (let i = 0; i < 6; i++) if (cnt[i] > cnt[top]) top = i;
+  R.aura = top; R.synCount = cnt[top];
+  R.syn = { 3: 1.1, 4: 1.2, 5: 1.3, 6: 1.5 }[cnt[top]] || 1;
+  ['hp', 'atk', 'def', 'spd'].forEach(k => R[k] *= R.syn);
+  // part shape jitter
+  R.shape = chars.map((c, i) => ({ w: .9 + hh(c + '#sw' + i) * .25, h: .9 + hh(c + '#sh' + i) * .25, rot: (hh(c + '#rt' + i) - .5) * .32 }));
+  // skills
+  R.skills = chars.map((c, i) => pickSkill(c, i, elems[i]));
+  R.pas = { regen: 0, wall: 0, guts: 0, reactor: 0, berserk: 0, thorn: 0 };
+  R.skills.filter(s => s.kind === 'pas').forEach(s => {
+    if (s.id === 'counterArmor') R.counter += .15;
+    else if (s.id === 'phantom') R.eva += .07;
+    else if (s.id === 'hunter') { R.crit += .08; R.critDmg += .3; }
+    else R.pas[s.id]++;
+  });
+  // ultimate
+  let bi = 0, bv = -1; chars.forEach((c, i) => { const v = hh(c + '#ult'); if (v > bv) { bv = v; bi = i; } });
+  R.ultIdx = bi; R.ultElem = elems[bi];
+  R.ultName = `「${chars[bi]}」${ULT[elems[bi]]}`;
+  R.name = chars[0] + chars[1] + SUFFIX[Math.floor(hh(key + '#name') * SUFFIX.length)];
+  ['hp', 'atk', 'def', 'spd', 'enGain'].forEach(k => R[k] = Math.round(R[k]));
+  R.power = calcPower(R);
+  R.rank = RANKS.find(r => R.power >= r[0])[1];
+  return R;
+}
+
+/* ================= sound ================= */
+let AC = null, muted = false;
+function sfx(type) {
+  if (muted) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const t = AC.currentTime;
+    const tone = (f1, f2, dur, typ = 'square', vol = .06, dl = 0) => {
+      const o = AC.createOscillator(), g = AC.createGain(); o.type = typ;
+      o.frequency.setValueAtTime(f1, t + dl); o.frequency.exponentialRampToValueAtTime(Math.max(f2, 1), t + dl + dur);
+      g.gain.setValueAtTime(vol, t + dl); g.gain.exponentialRampToValueAtTime(.0001, t + dl + dur);
+      o.connect(g).connect(AC.destination); o.start(t + dl); o.stop(t + dl + dur + .02);
+    };
+    const noise = (dur, vol = .15, dl = 0) => {
+      const b = AC.createBuffer(1, Math.floor(AC.sampleRate * dur), AC.sampleRate), d = b.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+      const s = AC.createBufferSource(); s.buffer = b; const g = AC.createGain(); g.gain.value = vol;
+      s.connect(g).connect(AC.destination); s.start(t + dl);
+    };
+    switch (type) {
+      case 'hit': noise(.1, .16); tone(220, 60, .1, 'square', .05); break;
+      case 'crit': noise(.22, .24); tone(700, 80, .22, 'sawtooth', .07); break;
+      case 'miss': tone(900, 1500, .1, 'sine', .05); break;
+      case 'shot': tone(900, 200, .15, 'square', .04); break;
+      case 'buff': tone(400, 1200, .3, 'triangle', .07); break;
+      case 'charge': tone(150, 1300, .9, 'sawtooth', .035); break;
+      case 'beam': noise(.6, .22); tone(130, 40, .6, 'sawtooth', .09); break;
+      case 'combine': [0, .1, .2, .3, .4, .5].forEach((d, i) => tone(330 + i * 110, 330 + i * 110, .1, 'square', .045, d)); tone(200, 1800, .6, 'sawtooth', .05, .65); break;
+      case 'boom': noise(.9, .3); tone(150, 30, .9, 'square', .09); break;
+      case 'win': [523, 659, 784, 1046].forEach((f, i) => tone(f, f, .18, 'square', .055, i * .12)); break;
+      case 'lose': [400, 300, 200, 120].forEach((f, i) => tone(f, f * .9, .25, 'triangle', .08, i * .2)); break;
+      case 'land': noise(.2, .2); tone(90, 40, .2, 'sine', .15); break;
+    }
+  } catch (e) { }
+}
+
+/* ================= rendering ================= */
+function hexPath(ctx, r) {
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) { const a = Math.PI / 6 + i * Math.PI / 3; ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
+  ctx.closePath();
+}
+
+/* --- glyph shape analysis: 文字の形を読み取る --- */
+const GN = 12, GCV = document.createElement('canvas'); GCV.width = GCV.height = 160;
+const GCTX = GCV.getContext('2d', { willReadFrequently: true });
+const GM = new Map();
+function glyphInfo(ch) {
+  if (GM.has(ch)) return GM.get(ch);
+  GCTX.clearRect(0, 0, 160, 160);
+  GCTX.font = `900 100px ${FONT}`; GCTX.textAlign = 'center'; GCTX.textBaseline = 'middle'; GCTX.fillStyle = '#000';
+  GCTX.fillText(ch, 80, 80);
+  const d = GCTX.getImageData(0, 0, 160, 160).data;
+  let x0 = 160, y0 = 160, x1 = -1, y1 = -1, ink = 0;
+  for (let y = 0; y < 160; y++) for (let x = 0; x < 160; x++) if (d[(y * 160 + x) * 4 + 3] > 110) {
+    ink++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+  }
+  let info;
+  if (x1 < 0) {
+    info = { cx: 0, cy: 0, bw: 70, bh: 70, fill: .25, density: .5, aspect: 1, rows: Array(GN).fill([-.5, .5]), cols: Array(GN).fill(-.5) };
+  } else {
+    const bw = x1 - x0 + 1, bh = y1 - y0 + 1, mx = x0 + bw / 2, my = y0 + bh / 2;
+    const rows = [], cols = [];
+    for (let r = 0; r < GN; r++) {
+      const ya = Math.floor(y0 + bh * r / GN), yb = Math.max(ya + 1, Math.floor(y0 + bh * (r + 1) / GN));
+      let l = 1e9, rr = -1;
+      for (let y = ya; y < yb; y++) for (let x = x0; x <= x1; x++) if (d[(y * 160 + x) * 4 + 3] > 110) { if (x < l) l = x; if (x > rr) rr = x; }
+      rows.push(rr < 0 ? null : [(l - mx) / bw, (rr - mx) / bw]);
+    }
+    for (let c = 0; c < GN; c++) {
+      const xa = Math.floor(x0 + bw * c / GN), xb = Math.max(xa + 1, Math.floor(x0 + bw * (c + 1) / GN));
+      let t = 1e9;
+      for (let x = xa; x < xb; x++) for (let y = y0; y <= y1; y++) if (d[(y * 160 + x) * 4 + 3] > 110) { if (y < t) t = y; break; }
+      cols.push(t > 1e8 ? null : (t - my) / bh);
+    }
+    info = { cx: mx - 80, cy: my - 80, bw, bh, fill: ink / 10000, density: ink / (bw * bh), aspect: bw / bh, rows, cols };
+  }
+  GM.set(ch, info);
+  return info;
+}
+function fitGlyph(g, w, h) {
+  let sx = w / g.bw, sy = h / g.bh; const mn = Math.min(sx, sy);
+  sx = Math.min(sx, mn * 1.9); sy = Math.min(sy, mn * 1.9);
+  return { sx, sy, dw: g.bw * sx, dh: g.bh * sy };
+}
+
+/* --- draw one character as an armor part --- */
+function drawGlyphPart(ctx, ch, el, w, h, flash) {
+  const g = glyphInfo(ch), f = fitGlyph(g, w, h);
+  ctx.save();
+  ctx.scale(f.sx, f.sy); ctx.translate(-g.cx, -g.cy);
+  ctx.font = `900 100px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+  // 厚み（押し出し）
+  ctx.fillStyle = '#06060e';
+  for (let k = 5; k >= 1; k--) ctx.fillText(ch, k * 1.1, k * 1.5);
+  // 外枠
+  ctx.lineWidth = 13; ctx.strokeStyle = '#05050c'; ctx.strokeText(ch, 0, 0);
+  ctx.lineWidth = 5; ctx.strokeStyle = el.c; ctx.shadowColor = el.c; ctx.shadowBlur = 9; ctx.strokeText(ch, 0, 0); ctx.shadowBlur = 0;
+  // メタル面
+  const top = g.cy - g.bh / 2, bot = g.cy + g.bh / 2;
+  const gr = ctx.createLinearGradient(0, top, 0, bot);
+  gr.addColorStop(0, el.c2); gr.addColorStop(.4, el.c); gr.addColorStop(.47, '#ffffff');
+  gr.addColorStop(.53, el.c); gr.addColorStop(.8, '#3a3550'); gr.addColorStop(1, '#101018');
+  ctx.fillStyle = gr; ctx.fillText(ch, 0, 0);
+  // ハイライト
+  ctx.globalAlpha *= .35; ctx.lineWidth = 1.4; ctx.strokeStyle = '#fff'; ctx.strokeText(ch, -1, -1.6);
+  ctx.restore();
+  if (flash > 0) {
+    ctx.save(); ctx.scale(f.sx, f.sy); ctx.translate(-g.cx, -g.cy);
+    ctx.font = `900 100px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.globalAlpha *= flash * .85; ctx.fillStyle = '#fff'; ctx.lineWidth = 8; ctx.strokeStyle = '#fff';
+    ctx.strokeText(ch, 0, 0); ctx.fillText(ch, 0, 0); ctx.restore();
+  }
+}
+function drawFin(ctx, s) {
+  const g = ctx.createLinearGradient(0, -s, 0, -s * .2); g.addColorStop(0, '#fff6c0'); g.addColorStop(1, '#c48a10');
+  ctx.fillStyle = g; ctx.strokeStyle = '#3a2600'; ctx.lineWidth = s * .03;
+  for (const m of [-1, 1]) {
+    ctx.beginPath(); ctx.moveTo(m * s * .06, -s * .34); ctx.lineTo(m * s * .85, -s * 1.0); ctx.lineTo(m * s * .2, -s * .48); ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+  ctx.fillStyle = '#ff2a4a'; ctx.beginPath(); ctx.moveTo(0, -s * .62); ctx.lineTo(s * .1, -s * .42); ctx.lineTo(-s * .1, -s * .42); ctx.closePath(); ctx.fill();
+}
+// p: {x,y = 関節(ピボット), r, w, h, ax, ay = ピボットが部品のどこにあるか(-.5〜.5)}
+function drawPart(ctx, ch, el, p, isHead, flash) {
+  ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.translate(-(p.ax || 0) * p.w, -(p.ay || 0) * p.h);
+  if (isHead) { const s = Math.min(p.w, p.h) * 1.15; ctx.save(); ctx.translate(0, -p.h * .42 + s * .34); drawFin(ctx, s); ctx.restore(); }
+  drawGlyphPart(ctx, ch, el, p.w, p.h, flash);
+  ctx.restore();
+}
+function rot(x, y, r) { const c = Math.cos(r), s = Math.sin(r); return [x * c - y * s, x * s + y * c]; }
+function partCenter(p) { const [dx, dy] = rot(-(p.ax || 0) * p.w, -(p.ay || 0) * p.h, p.r); return { x: p.x + dx, y: p.y + dy }; }
+function partTip(p) { const c = partCenter(p); const [dx, dy] = rot(0, p.h / 2, p.r); return { x: c.x + dx, y: c.y + dy }; }
+
+/* --- 合体: 胴体の文字の輪郭に手足・頭をくっつける --- */
+function robotLayout(R, S, dir) {
+  const T = R.type.P, sh = R.shape;
+  const fitBox = (i, b) => { const f = fitGlyph(glyphInfo(R.chars[i]), b[0] * S * sh[i].w, b[1] * S * sh[i].h); return [f.dw, f.dh]; };
+  const gb = glyphInfo(R.chars[1]);
+  const [dw, dh] = fitBox(1, T.body);
+  const rowAt = fr => {
+    const i = Math.min(GN - 1, Math.max(0, Math.floor(fr * GN)));
+    for (let d = 0; d < GN; d++) for (const j of [i - d, i + d]) if (j >= 0 && j < GN && gb.rows[j]) return { l: gb.rows[j][0] * dw, r: gb.rows[j][1] * dw, y: ((j + .5) / GN - .5) * dh };
+    return { l: -dw / 2, r: dw / 2, y: (fr - .5) * dh };
+  };
+  const ov = S * .07;
+  const P = [];
+  P[1] = { x: 0, y: 0, r: 0, w: dw, h: dh, ax: 0, ay: 0 };
+  const [hw, hh2] = fitBox(0, T.head);
+  const [aw, ah] = fitBox(2, T.arm), [aw2, ah2] = fitBox(3, T.arm);
+  const [lw, lh] = fitBox(4, T.leg), [lw2, lh2] = fitBox(5, T.leg);
+  const jr = i => sh[i].rot * .35;
+  if (!T.beast) {
+    // 頭: 胴体の文字のてっぺん（中央付近）に乗せる
+    let topY = 1;
+    for (let c = Math.floor(GN / 2) - 2; c <= Math.floor(GN / 2) + 1; c++) if (gb.cols[c] != null) topY = Math.min(topY, gb.cols[c]);
+    if (topY > .5) topY = -.5;
+    P[0] = { x: 0, y: topY * dh + ov, r: jr(0) * .5, w: hw, h: hh2, ax: 0, ay: .45 };
+    // 腕: 肩の高さで胴体の文字の左右の端に付ける
+    const s = rowAt(T.sh);
+    P[2] = { x: s.l + ov, y: s.y, r: T.armR + jr(2), w: aw, h: ah, ax: 0, ay: -.42 };
+    P[3] = { x: s.r - ov, y: s.y, r: -T.armR + jr(3), w: aw2, h: ah2, ax: 0, ay: -.42 };
+    // 足: 胴体の文字の一番下の線に付ける
+    const b = rowAt(.98), cx = (b.l + b.r) / 2, half = Math.max((b.r - b.l) / 2, S * .3);
+    P[4] = { x: cx - half * .55, y: b.y - ov * .5, r: T.legR + jr(4) * .3, w: lw, h: lh, ax: 0, ay: -.45 };
+    P[5] = { x: cx + half * .55, y: b.y - ov * .5, r: -T.legR + jr(5) * .3, w: lw2, h: lh2, ax: 0, ay: -.45 };
+  } else {
+    const s = rowAt(.22);
+    P[0] = { x: s.r - ov, y: s.y, r: .12, w: hw, h: hh2, ax: -.42, ay: .15 };
+    const b = rowAt(.98), span = Math.max(b.r - b.l, S * .9), l0 = (b.l + b.r) / 2 - span / 2;
+    [[2, .86, aw, ah], [3, .62, aw2, ah2], [4, .38, lw, lh], [5, .14, lw2, lh2]].forEach(([i, fr, w, h]) => {
+      P[i] = { x: l0 + span * fr, y: b.y - ov * .5, r: jr(i) * .3, w, h, ax: 0, ay: -.45 };
+    });
+  }
+  if (dir < 0) P.forEach(p => { p.x = -p.x; p.r = -p.r; p.ax = -p.ax; });
+  return P;
+}
+function frontIdx(P, a, b, dir) { return P[a].x * dir >= P[b].x * dir ? a : b; }
+
+/* opts: t, dir, ext:{idx,k}, hide, flash, dead, combine(i,b), jointA, out[] */
+function drawRobot(ctx, R, cx, cy, S, o = {}) {
+  const t = o.t || 0, dir = o.dir || 1;
+  const fly = R.type.P.fly;
+  const bob = Math.sin(t * 3) * S * (fly ? .12 : .05) - (fly ? S * .2 : 0);
+  let P = robotLayout(R, S, dir).map((b, i) => {
+    const p = Object.assign({}, b);
+    if (i === 2 || i === 3) p.r += Math.sin(t * 3 + i) * .06;
+    if (i === 0) p.y += Math.sin(t * 3 + 1) * S * .02;
+    return p;
+  });
+  if (o.ext && o.ext.k > 0) {
+    const p = P[o.ext.idx], k = o.ext.k;
+    if (o.ext.idx >= 4) { p.r = lerp(p.r, -dir * 1.35, k); }
+    else { p.x += dir * S * .25 * k; p.r = lerp(p.r, -dir * Math.PI / 2, k); }
+  }
+  if (o.combine) P = P.map((b, i) => o.combine(i, b));
+  const dead = o.dead || 0;
+  if (dead > 0) P = P.map((b, i) => {
+    const ang = i * 1.047 + .4, v = S * 6 * dead;
+    return Object.assign({}, b, { x: b.x + Math.cos(ang) * v, y: b.y + Math.sin(ang) * v - S * 4 * dead + S * 6 * dead * dead, r: b.r + dead * 7 * (i % 2 ? 1 : -1) });
+  });
+  ctx.save(); ctx.translate(cx, cy + bob);
+  const baseA = ctx.globalAlpha;
+  const bodyA = dead ? baseA * clamp(1 - dead / 1.6) : baseA;
+  const jA = o.jointA == null ? 1 : o.jointA;
+  const auraEl = ELEM[R.aura];
+  if (!dead && jA > 0) {
+    // aura
+    const rg = ctx.createRadialGradient(0, 0, S * .2, 0, 0, S * 2.3);
+    rg.addColorStop(0, auraEl.c + '55'); rg.addColorStop(1, auraEl.c + '00');
+    ctx.globalAlpha = baseA * jA * (.7 + .3 * Math.sin(t * 4));
+    ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(0, 0, S * 2.3, 0, Math.PI * 2); ctx.fill();
+    // thrusters (足の先から噴射)
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = baseA * jA;
+    for (const i of [4, 5]) {
+      const tip = partTip(P[i]), fl = S * (fly ? .9 : .4) * (.8 + Math.random() * .4);
+      const g = ctx.createLinearGradient(tip.x, tip.y, tip.x, tip.y + fl);
+      g.addColorStop(0, '#ffffff'); g.addColorStop(.3, auraEl.c); g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(tip.x, tip.y + fl / 2, S * .12, fl / 2, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+  ctx.globalAlpha = bodyA;
+  const order = R.type.P.beast ? [5, 4, 3, 1, 2, 0] : [4, 5, 1, 0, 2, 3];
+  for (const i of order) {
+    if (o.hide === i) continue;
+    drawPart(ctx, R.chars[i], ELEM[R.elems[i]], P[i], i === 0 && !R.type.P.beast, o.flash || 0);
+  }
+  // 関節（文字と文字のつなぎ目）
+  if (!dead && jA > 0) {
+    ctx.globalAlpha = baseA * jA;
+    for (const i of [0, 2, 3, 4, 5]) {
+      if (o.hide === i) continue;
+      const p = P[i], r = S * (i === 0 ? .1 : .14);
+      const g = ctx.createRadialGradient(p.x - r * .3, p.y - r * .3, 1, p.x, p.y, r);
+      g.addColorStop(0, '#c9cee8'); g.addColorStop(.6, '#4a4f6e'); g.addColorStop(1, '#14162a');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = auraEl.c; ctx.shadowColor = auraEl.c; ctx.shadowBlur = 8;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r * .38, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+    }
+  }
+  ctx.restore();
+  if (o.out) P.forEach((p, i) => { const c = partCenter(p); o.out[i] = { x: cx + c.x, y: cy + bob + c.y }; });
+}
+
+/* background */
+const STARS = Array.from({ length: 70 }, () => ({ x: Math.random(), y: Math.random() * .6, s: Math.random() * 1.6 + .3, p: Math.random() * 6 }));
+function drawBG(ctx, W, H, t, hz = .66) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#04050f'); g.addColorStop(.55, '#1a0f3d'); g.addColorStop(1, '#090418');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  for (const s of STARS) { ctx.globalAlpha = .4 + .4 * Math.sin(t * 2 + s.p); ctx.fillStyle = '#fff'; ctx.fillRect(s.x * W, s.y * H, s.s, s.s); }
+  ctx.globalAlpha = 1;
+  const Y = H * hz;
+  const hg = ctx.createLinearGradient(0, Y - 40, 0, Y + 10); hg.addColorStop(0, 'rgba(255,77,210,0)'); hg.addColorStop(1, 'rgba(255,77,210,.35)');
+  ctx.fillStyle = hg; ctx.fillRect(0, Y - 40, W, 50);
+  ctx.strokeStyle = 'rgba(120,90,255,.45)'; ctx.lineWidth = 1;
+  for (let i = -12; i <= 12; i++) { ctx.beginPath(); ctx.moveTo(W / 2 + i * 12, Y); ctx.lineTo(W / 2 + i * W * .18, H); ctx.stroke(); }
+  const off = (t * .5) % 1;
+  for (let i = 0; i < 9; i++) {
+    const k = Math.pow((i + off) / 9, 2.2), y = Y + (H - Y) * k;
+    ctx.globalAlpha = k; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+function txt(ctx, s, x, y, size, col, opt = {}) {
+  ctx.font = `${opt.w || 400} ${size}px ${opt.f || FONT2}`; ctx.textAlign = opt.a || 'center'; ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round'; ctx.lineWidth = opt.lw == null ? size * .18 : opt.lw; ctx.strokeStyle = opt.sc || '#000';
+  if (ctx.lineWidth > 0) ctx.strokeText(s, x, y);
+  if (opt.glow) { ctx.shadowColor = opt.glow; ctx.shadowBlur = size * .5; }
+  ctx.fillStyle = col; ctx.fillText(s, x, y); ctx.shadowBlur = 0;
+}
+
+/* ================= build screen ================= */
+const SLOT_POS = [1, 4, 3, 5, 6, 8]; // grid cell index for head, body, rarm, larm, rleg, lleg
+const RANDOM_POOL = '龍神鋼鉄炎雷氷嵐闇光牙爪剣刃斬覇王帝皇鬼獣虎鷹狼星月海空翼砲盾鎧轟爆烈魂魔聖剛撃破天地風水火金銀黒白紅蒼勇猛将軍凱弾';
+const ENEMY_POOL = RANDOM_POOL + '骸獄冥呪滅邪蛇蟲毒影怨凶魍魎餓刻壊零斧槌錬核機械歯骨角甲殻ゾドガギグバズ';
+const inputs = [];
+function setupBuild() {
+  const box = $('#slots');
+  for (let c = 0; c < 9; c++) {
+    const pi = SLOT_POS.indexOf(c);
+    const d = document.createElement('div');
+    d.className = 'slot' + (pi < 0 ? ' empty' : '');
+    if (pi >= 0) {
+      d.innerHTML = `<label>${PARTS[pi].n}</label><input autocomplete="off" inputmode="text"><span class="el"></span>`;
+      const inp = d.querySelector('input');
+      inp.dataset.i = pi; inputs[pi] = inp;
+      const norm = () => { const v = Array.from(inp.value.replace(/\s/g, '')); inp.value = v.length ? v[v.length - 1] : ''; onChars(); };
+      inp.addEventListener('input', e => { if (!e.isComposing) norm(); });
+      inp.addEventListener('compositionend', norm);
+      inp.addEventListener('change', norm);
+      inp.addEventListener('focus', () => inp.select());
+    }
+    box.appendChild(d);
+  }
+  $('#rndBtn').onclick = () => {
+    const pool = Array.from(RANDOM_POOL);
+    inputs.forEach(inp => inp.value = pool[Math.floor(Math.random() * pool.length)]);
+    onChars();
+  };
+  $('#goBtn').onclick = () => { if (curRobot) startRun(curRobot); };
+  $('#rankBtn').onclick = showRanking;
+  try { const saved = JSON.parse(localStorage.getItem('mojirobo_last') || 'null'); if (Array.isArray(saved) && saved.length === 6) saved.forEach((c, i) => inputs[i].value = c); } catch (e) { }
+  onChars();
+}
+let curRobot = null, pvRobot = null;
+// フォント読み込み後に文字の形を測り直す（形でステータスが変わるため）
+const FONT_KEY = '900 100px "Noto Sans JP"', fontTried = new Set();
+function fontReady(text) { return document.fonts ? document.fonts.load(FONT_KEY, text).catch(() => { }) : Promise.resolve(); }
+function ensureFont(cs) {
+  const text = cs.join('');
+  if (!document.fonts || fontTried.has(text) || document.fonts.check(FONT_KEY, text)) return;
+  fontTried.add(text);
+  fontReady(text).then(() => { cs.forEach(c => GM.delete(c)); onChars(); });
+}
+function curChars() { return inputs.map(i => i.value); }
+function onChars() {
+  const cs = curChars();
+  cs.forEach((c, i) => {
+    const el = inputs[i].parentNode.querySelector('.el'), e = ELEM[elemOf(c)];
+    el.textContent = c ? e.n + '属性' : '';
+    el.style.background = c ? e.c : 'transparent'; el.style.color = '#000';
+    inputs[i].style.borderColor = c ? e.c : '';
+  });
+  ensureFont(cs.filter(c => c));
+  const full = cs.every(c => c);
+  const pcs = cs.map(c => c || '？');
+  pvRobot = buildRobot(pcs);
+  pcs.forEach((c, i) => { if (c === '？') pvRobot.elems[i] = 6; });
+  curRobot = full ? pvRobot : null;
+  $('#goBtn').disabled = !full;
+  renderInfo();
+}
+function statBar(sd, v) {
+  const pct = clamp((v - sd.min) / (sd.max - sd.min) * .85 + .1, .03, 1) * 100;
+  return `<div class="st"><span>${sd.n}</span><div class="bar"><i style="width:${pct}%"></i></div><b>${sd.f(v)}</b></div>`;
+}
+function renderInfo() {
+  const box = $('#info');
+  if (!curRobot) { box.innerHTML = '<p class="hint" style="text-align:center">6つの文字を入れるとロボの性能がわかるよ</p>'; return; }
+  const R = curRobot, ue = ELEM[R.ultElem];
+  let h = `<div class="infoHead"><span class="rank">${R.rank}</span><span class="rname">${esc(R.name)}</span>
+    <span class="tag">${R.type.n}：${R.type.d}</span>
+    <span class="tag" style="background:${ELEM[R.aura].c};color:#000">${ELEM[R.aura].n}オーラ${R.synCount >= 3 ? `・シナジー×${R.synCount} (+${Math.round((R.syn - 1) * 100)}%)` : ''}</span>
+    <span class="tag">重量 ${R.weight}t</span><span class="tag">戦闘力 ${R.power}</span></div>`;
+  if (R.shapeBonus.length) h += `<div class="infoHead"><span class="tag" style="background:#3a2a00;color:#ffd35a">字形ボーナス</span>${R.shapeBonus.map(b => `<span class="tag">${esc(b)}</span>`).join('')}</div>`;
+  h += '<div class="statGrid">' + STAT_DEF.map(sd => statBar(sd, R[sd.k])).join('') + '</div>';
+  h += '<div class="skills">';
+  h += `<div class="sk"><div class="ch" style="color:${ue.c}">${esc(R.chars[R.ultIdx])}</div><div><div class="nm"><span class="kd ult">必殺</span>${esc(R.ultName)}</div><div class="ds">EN100で発動。${ue.n}属性の超ビーム (攻撃×${R.spPow.toFixed(2)}) + ${EFF_NAME[ELEM_EFF[R.ultElem]] || ''}</div></div></div>`;
+  R.skills.forEach(s => {
+    const lab = s.kind === 'atk' ? '攻撃' : s.kind === 'sup' ? '補助' : '常時';
+    h += `<div class="sk"><div class="ch" style="color:${ELEM[s.elem].c}">${esc(s.ch)}</div><div><div class="nm"><span class="kd ${s.kind}">${lab}</span>${esc(s.name)} <small style="color:#8d93c7">(${PARTS[s.part].n})</small></div><div class="ds">${s.ds}${s.id === 'eshot' ? '：' + EFF_NAME[ELEM_EFF[s.elem]] : ''}${s.cdMax ? `／CT${s.cdMax}` : ''}</div></div></div>`;
+  });
+  h += '</div>';
+  box.innerHTML = h;
+}
+
+/* ================= canvases ================= */
+const pv = $('#pv'), pctx = pv.getContext('2d');
+const cv = $('#cv'), ctx = cv.getContext('2d');
+const W = 720, H = 480;
+function fitCanvas(c, w, h) { const d = Math.min(2, window.devicePixelRatio || 1); c.width = w * d; c.height = h * d; c.getContext('2d').setTransform(d, 0, 0, d, 0, 0); }
+fitCanvas(pv, 320, 336); fitCanvas(cv, W, H);
+
+function drawPreview(t) {
+  drawBG(pctx, 320, 336, t, .74);
+  if (pvRobot) drawRobot(pctx, pvRobot, 160, 170, 64, { t, dir: 1 });
+  if (curRobot) txt(pctx, curRobot.name, 160, 22, 20, '#fff', { glow: ELEM[curRobot.aura].c });
+  else txt(pctx, '文字を6つ入れてね', 160, 22, 16, '#8d93c7');
+}
+
+/* ================= battle ================= */
+let B = null, run = null, speed = 1;
+const PX = 185, EX = 535, CY = 285;
+function logMsg(s) { const l = $('#log'); const d = document.createElement('div'); d.textContent = s; l.prepend(d); while (l.children.length > 5) l.lastChild.remove(); }
+
+function mkFighter(R, k, side) {
+  const f = Object.assign({}, R);
+  f.maxhp = Math.round(R.hp * k); f.atk = R.atk * k; f.def = R.def * k; f.spd = R.spd * (1 + (k - 1) * .35);
+  f.hp = f.maxhp; f.dispHp = f.hp; f.side = side; f.dir = side === 'p' ? 1 : -1; f.x = side === 'p' ? PX : EX;
+  f.gauge = Math.random() * 40; f.en = 0; f.ox = 0; f.oy = 0; f.jy = 0; f.flash = 0; f.dead = 0; f.shake = 0; f.dodge = 0;
+  f.ext = null; f.hide = null; f.st = {}; f.shield = 0; f.gutsLeft = R.pas.guts;
+  f.skills = R.skills.map(s => Object.assign({}, s, { cd: Math.floor(Math.random() * 2) }));
+  f.S = 56;
+  return f;
+}
+function genEnemy(stage) {
+  const pool = Array.from(ENEMY_POOL);
+  const chars = Array.from({ length: 6 }, () => pool[Math.floor(Math.random() * pool.length)]);
+  const R = buildRobot(chars);
+  const boss = stage % 5 === 0;
+  const k = (.56 + .07 * (stage - 1)) * (boss ? 1.3 : 1);
+  const f = mkFighter(R, k, 'e');
+  f.boss = boss; if (boss) { f.S = 64; f.name = 'BOSS ' + f.name; }
+  return f;
+}
+function startRun(R) {
+  try { localStorage.setItem('mojirobo_last', JSON.stringify(R.chars)); } catch (e) { }
+  run = { robot: R, stage: 1, wins: 0, hpRatio: 1 };
+  $('#build').classList.remove('active'); $('#battle').classList.add('active');
+  $('#log').innerHTML = '';
+  B = { p: mkFighter(R, 1, 'p'), e: null, phase: 'combine', pt: 0, t: 0, parts: [], pops: [], labels: [], act: null, shake: 0, flashS: 0, cutin: null, out: [] };
+  B.e = genEnemy(1);
+  B.e.oy = -900;
+  sfx('combine');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function startStage() {
+  const p = mkFighter(run.robot, 1 + .06 * run.wins, 'p');
+  p.hp = Math.max(1, Math.round(p.maxhp * run.hpRatio)); p.dispHp = p.hp;
+  B.p = p; B.e = genEnemy(run.stage); B.e.oy = -900;
+  B.phase = 'enter'; B.pt = 0; B.act = null; B.landed = false; B.cutin = null;
+  logMsg(`STAGE ${run.stage}：${B.e.name} が現れた！`);
+}
+function setPhase(ph) { B.phase = ph; B.pt = 0; }
+function pop(x, y, s, col, size = 26, life = 1) { B.pops.push({ x, y, s, col, size, life, max: life }); }
+function burst(x, y, col, n = 16, sp = 260, sz = 4) {
+  for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = rnd(.3, 1) * sp; B.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: rnd(.3, .8), max: .8, col, sz: rnd(sz * .5, sz * 1.5) }); }
+}
+function ring(x, y, col, r = 60) { B.parts.push({ ring: true, x, y, r: 6, R: r, life: .35, max: .35, col }); }
+const other = f => f === B.p ? B.e : B.p;
+
+/* ---- actions ---- */
+const NORMAL = { id: 'normal', kind: 'atk', mult: 1, anim: 'melee', hits: 1, name: '通常攻撃' };
+function ultSkill(f) { return { id: 'ult', kind: 'atk', anim: 'ult', hits: 1, mult: f.spPow, name: f.ultName, elem: f.ultElem, effElem: true, effRate: 1 }; }
+function mkAct(a, d, s, extra = {}) {
+  const A = Object.assign({ a, d, s, t: 0, times: [], done: 0, counter: false }, extra);
+  let n = s.hits || 1;
+  if (s.id === 'normal') { n = 1; while (n < 3 && Math.random() < a.combo) n++; A.limb = Math.random() < .5 ? 'arm' : 'leg'; }
+  if (s.anim === 'melee') { for (let k = 0; k < n; k++) A.times.push(.22 + k * .12); A.dur = A.times[n - 1] + .4; }
+  else if (s.anim === 'shot') { for (let k = 0; k < n; k++) A.times.push(.45 + k * .13); A.dur = A.times[n - 1] + .35; }
+  else if (s.anim === 'buff') { A.times = [.35]; A.dur = .85; }
+  else if (s.anim === 'ult') { A.times = [1.15]; A.dur = 1.8; }
+  else { A.times = []; A.dur = .55; }
+  A.n = n;
+  if (s.id !== 'normal' && s.anim !== 'wait') {
+    const col = s.anim === 'ult' ? '#ffd35a' : ELEM[s.elem == null ? 6 : s.elem].c;
+    if (s.anim !== 'ult') B.labels.push({ s: s.name, x: a.x, y: CY - 120, col, life: 1.3, max: 1.3 });
+    logMsg(`${a.side === 'p' ? '▶' : '◀'} ${a.name} の ${s.name}！`);
+  }
+  if (s.anim === 'ult') { B.cutin = { s: s.name, side: a.side, col: ELEM[a.ultElem].c, t: 0 }; sfx('charge'); }
+  if (s.anim === 'shot') sfx('shot');
+  return A;
+}
+function usable(s, f) {
+  if (s.id === 'repair') return f.hp < f.maxhp * .7;
+  if (s.id === 'barrier') return f.shield <= 0;
+  if (s.id === 'boost') return !f.st.atkUp;
+  if (s.id === 'accel') return !f.st.spdUp;
+  if (s.id === 'lockon') return !f.st.lockon;
+  if (s.id === 'jam') return !other(f).st.blind;
+  if (s.id === 'charge') return f.en < 60;
+  if (s.id === 'cleanse') return f.st.burn || f.st.poison || f.st.para || f.st.blind || f.st.defDown;
+  return true;
+}
+function startTurn(f) {
+  const o = other(f);
+  f.skills.forEach(s => { if (s.cd > 0) s.cd--; });
+  const hx = f.x + f.ox, hy = CY - 70;
+  if (f.st.burn > 0) { const d = Math.max(1, Math.round(f.maxhp * .06)); f.hp -= d; f.st.burn--; pop(hx, hy, `炎上 -${d}`, '#ff7a3a', 20); burst(hx, CY, '#ff5a2a', 10, 120); }
+  if (f.st.poison > 0) { const d = Math.max(1, Math.round(f.maxhp * .045)); f.hp -= d; f.st.poison--; pop(hx, hy + 22, `毒 -${d}`, '#c07bff', 20); }
+  if (f.pas.regen && f.hp > 0) { const d = Math.round(f.maxhp * .03 * f.pas.regen); f.hp = Math.min(f.maxhp, f.hp + d); pop(hx, hy - 22, `+${d}`, '#5aff9c', 18); }
+  if (f.hp <= 0) { if (gutsCheck(f)) { } else { f.hp = 0; B.act = mkAct(f, o, { id: 'wait', anim: 'wait' }); return; } }
+  if (f.st.para > 0) {
+    f.st.para--;
+    if (Math.random() < .5) { pop(hx, hy, 'マヒで動けない！', '#ffe14d', 20); B.act = mkAct(f, o, { id: 'wait', anim: 'wait' }); return; }
+  }
+  let s = NORMAL;
+  if (f.en >= 100) { f.en = 0; s = ultSkill(f); }
+  else {
+    const ready = f.skills.filter(k => k.kind !== 'pas' && k.cd <= 0 && usable(k, f));
+    if (ready.length && Math.random() < .55) { s = ready[Math.floor(Math.random() * ready.length)]; s.cd = s.cdMax; }
+  }
+  B.act = mkAct(f, o, s);
+  if (s.id !== 'ult') f.en = Math.min(100, f.en + f.enGain * (1 + .5 * f.pas.reactor));
+}
+function gutsCheck(f) {
+  if (f.hp <= 0 && f.gutsLeft > 0) { f.gutsLeft--; f.hp = 1; pop(f.x, CY - 110, '根性！', '#ffd35a', 30); return true; }
+  return false;
+}
+function applyEff(d, eff, rate = .7) {
+  if (!eff || Math.random() > rate * (1 - d.resist)) return;
+  const hx = d.x, hy = CY - 140;
+  if (eff === 'burn') d.st.burn = 3;
+  else if (eff === 'poison') d.st.poison = 3;
+  else if (eff === 'para') d.st.para = 2;
+  else if (eff === 'blind') d.st.blind = 3;
+  else if (eff === 'defDown') d.st.defDown = 3;
+  else if (eff === 'freeze') d.gauge -= 60;
+  else if (eff === 'knock') { d.gauge -= 40; d.ox -= d.dir * 0; }
+  pop(hx, hy, EFF_NAME[eff] || (eff === 'defDown' ? '防御ダウン' : eff), '#ffb0f0', 20, 1.1);
+}
+function doHit(A, k) {
+  const { a, d, s } = A;
+  const hx = d.x + d.ox, hy = CY - 20 + rnd(-20, 20);
+  if (s.kind === 'sup') { doSupport(A); return; }
+  if (d.hp <= 0) return;
+  const sure = s.sure || a.st.lockon || s.anim === 'ult';
+  const hitRate = a.acc * (a.st.blind ? .65 : 1) - d.eva - (d.st.spdUp ? .06 : 0);
+  if (!sure && Math.random() > hitRate) { pop(hx, hy - 50, 'MISS', '#9cf', 24, .8); sfx('miss'); d.dodge = .35; return; }
+  const el = s.id === 'normal' ? a.elems[A.limb === 'leg' ? 4 : 2] : (s.elem == null ? a.aura : s.elem);
+  let atk = a.atk * (a.st.atkUp ? 1.35 : 1) * (a.pas.berserk && a.hp < a.maxhp * .35 ? 1.5 : 1);
+  let dmg = atk * 1.3 * rnd(.88, 1.12) * (s.mult || 1);
+  const em = adv(el, d.aura); dmg *= em;
+  const crit = a.st.lockon || Math.random() < a.crit;
+  if (crit) dmg *= a.critDmg;
+  let def = d.def * (d.st.defDown ? .6 : 1) * (1 - a.pierce);
+  if (s.pierceAll) def *= .2;
+  dmg *= 100 / (100 + def * 1.6);
+  if (d.pas.wall) dmg *= Math.pow(.88, d.pas.wall);
+  dmg = Math.max(1, Math.round(dmg));
+  if (d.shield > 0) { const ab = Math.min(d.shield, dmg); d.shield -= ab; dmg -= ab; pop(hx, hy - 75, `シールド -${ab}`, '#4dc3ff', 16, .8); }
+  d.hp -= dmg; gutsCheck(d); d.hp = Math.max(0, d.hp);
+  d.flash = 1; d.shake = crit || s.anim === 'ult' ? 18 : 8;
+  B.shake = Math.max(B.shake, s.anim === 'ult' ? 18 : crit ? 10 : 4);
+  d.en = Math.min(100, d.en + 7);
+  const big = crit || s.anim === 'ult';
+  pop(hx + rnd(-15, 15), hy - 40, String(dmg), crit ? '#ffd35a' : '#fff', big ? 40 : 28, .9);
+  if (crit) pop(hx, hy - 85, 'CRITICAL!', '#ff4d6a', 22, .9);
+  if (em > 1) pop(hx, hy + 30, '効果バツグン！', '#7dffb0', 18, .9);
+  else if (em < 1) pop(hx, hy + 30, 'いまひとつ…', '#99a', 16, .8);
+  burst(hx, hy, ELEM[el].c, big ? 40 : 14, big ? 420 : 260, big ? 6 : 4);
+  burst(hx, hy, '#fff', 6, 200, 3); ring(hx, hy, ELEM[el].c, big ? 120 : 60);
+  sfx(big ? 'crit' : 'hit');
+  if (s.drain) { const h = Math.round(dmg * s.drain); a.hp = Math.min(a.maxhp, a.hp + h); pop(a.x, CY - 90, `+${h}`, '#5aff9c', 22); }
+  if (s.eff) applyEff(d, s.eff, s.effRate || .8);
+  if (s.effElem) applyEff(d, ELEM_EFF[el], s.effRate || .7);
+  if (s.anim === 'melee' && d.pas.thorn && d.hp > 0) { const r = Math.max(1, Math.round(dmg * .1 * d.pas.thorn)); a.hp = Math.max(0, a.hp - r); pop(a.x, CY - 70, `トゲ -${r}`, '#ffaa66', 16); gutsCheck(a); }
+  if (s.anim === 'melee' && !A.isCounter && d.hp > 0 && k === A.n - 1 && Math.random() < d.counter) A.counter = true;
+}
+function doSupport(A) {
+  const { a, d, s } = A; const x = a.x, y = CY - 80;
+  ring(a.x, CY, s.col, 110); burst(a.x, CY, s.col, 24, 200, 4); sfx('buff');
+  switch (s.id) {
+    case 'repair': { const h = Math.round(a.maxhp * .25); a.hp = Math.min(a.maxhp, a.hp + h); pop(x, y, `+${h}`, '#5aff9c', 30); break; }
+    case 'barrier': a.shield = Math.round(a.maxhp * .2); pop(x, y, 'シールド展開', '#4dc3ff', 22); break;
+    case 'boost': a.st.atkUp = 3; pop(x, y, '攻撃力UP!', '#ff6a3d', 22); break;
+    case 'accel': a.st.spdUp = 3; pop(x, y, '素早さUP!', '#3dffcf', 22); break;
+    case 'lockon': a.st.lockon = 1; pop(x, y, 'ロックオン!', '#ff3d6a', 22); break;
+    case 'jam': if (Math.random() < 1 - d.resist * .5) { d.st.blind = 3; pop(d.x, y, '暗闇!', '#c78bff', 22); } else pop(d.x, y, '効かない!', '#99a', 20); break;
+    case 'charge': a.en = Math.min(100, a.en + 50); pop(x, y, 'EN+50', '#ffd35a', 22); break;
+    case 'cleanse': ['burn', 'poison', 'para', 'blind', 'defDown'].forEach(k => delete a.st[k]); { const h = Math.round(a.maxhp * .1); a.hp = Math.min(a.maxhp, a.hp + h); pop(x, y, `回復 +${h}`, '#fff', 22); } break;
+  }
+}
+function endTurnBuffs(f) {
+  ['atkUp', 'spdUp', 'blind', 'defDown'].forEach(k => { if (f.st[k] > 0 && --f.st[k] <= 0) delete f.st[k]; });
+}
+function endAct() {
+  const A = B.act; B.act = null;
+  const a = A.a; a.ox = 0; a.ext = null; a.hide = null;
+  if (A.hitLockon) delete a.st.lockon;
+  endTurnBuffs(a);
+  if (B.e.hp <= 0) { win(); return; }
+  if (B.p.hp <= 0) { lose(); return; }
+  if (A.counter) {
+    pop(A.d.x, CY - 130, 'カウンター！', '#ff9d3d', 26);
+    B.act = mkAct(A.d, a, NORMAL, { isCounter: true });
+  }
+}
+function win() {
+  const e = B.e; setPhase('win');
+  burst(e.x, CY, ELEM[e.aura].c, 90, 600, 7); burst(e.x, CY, '#fff', 40, 400, 5); ring(e.x, CY, '#fff', 260);
+  B.shake = 24; B.flashS = .8; sfx('boom'); setTimeout(() => sfx('win'), 450);
+  run.wins++; run.hpRatio = Math.min(1, B.p.hp / B.p.maxhp + .4);
+  logMsg(`★ ${e.name} を撃破！ (撃破数 ${run.wins})`);
+}
+function lose() {
+  setPhase('lose'); const p = B.p;
+  burst(p.x, CY, ELEM[p.aura].c, 90, 600, 7); ring(p.x, CY, '#fff', 260);
+  B.shake = 24; B.flashS = .8; sfx('boom'); setTimeout(() => sfx('lose'), 500);
+  logMsg(`✖ ${p.name} は大破した…`);
+}
+
+function updBattle(dt) {
+  B.t += dt; B.pt += dt;
+  const { p, e } = B;
+  for (const f of [p, e]) {
+    f.flash = Math.max(0, f.flash - dt * 4); f.shake = Math.max(0, f.shake - dt * 40);
+    f.dispHp += (f.hp - f.dispHp) * Math.min(1, dt * 6);
+    if (f.dodge > 0) { f.dodge = Math.max(0, f.dodge - dt); f.jy = -55 * Math.sin(Math.PI * (1 - f.dodge / .35)); } else f.jy = 0;
+  }
+  B.shake = Math.max(0, B.shake - dt * 50); B.flashS = Math.max(0, B.flashS - dt * 2);
+  for (const q of B.parts) { q.life -= dt; if (!q.ring) { q.x += q.vx * dt; q.y += q.vy * dt; q.vx *= .94; q.vy = q.vy * .94 + 200 * dt; } else q.r = lerp(q.r, q.R, .25); }
+  B.parts = B.parts.filter(q => q.life > 0);
+  B.pops.forEach(q => { q.life -= dt; q.y -= 40 * dt; }); B.pops = B.pops.filter(q => q.life > 0);
+  B.labels.forEach(q => q.life -= dt); B.labels = B.labels.filter(q => q.life > 0);
+  if (B.cutin) { B.cutin.t += dt; if (B.cutin.t > 1.1) B.cutin = null; }
+
+  if (B.phase === 'combine') {
+    p.x = B.pt < 2.5 ? W / 2 : lerp(W / 2, PX, easeInOut(clamp((B.pt - 2.5) / .6)));
+    if (B.pt < 1.7) B.out.forEach((o, i) => { if (o && Math.random() < .6) B.parts.push({ x: o.x, y: o.y, vx: rnd(-30, 30), vy: rnd(-30, 30), life: .4, max: .4, col: ELEM[p.elems[i]].c, sz: 4 }); });
+    if (!B.cflash && B.pt >= 1.7) { B.cflash = 1; B.flashS = 1; B.shake = 14; burst(W / 2, CY, '#fff', 60, 500, 5); ring(W / 2, CY, ELEM[p.aura].c, 300); }
+    if (B.pt >= 3.1) { p.x = PX; setPhase('enter'); logMsg(`合体完了！ ${p.name}（${p.type.n}）出撃！`); logMsg(`STAGE 1：${e.name} が現れた！`); }
+  } else if (B.phase === 'enter') {
+    const k = clamp(B.pt / .9);
+    e.oy = -520 * (1 - k * k);
+    if (!B.landed && k >= 1) { B.landed = true; B.shake = 14; sfx('land'); burst(e.x, CY + 75, '#9a8cff', 30, 300, 4); }
+    if (B.pt >= 2.0) { e.oy = 0; setPhase('fight'); }
+  } else if (B.phase === 'fight') {
+    if (B.act) {
+      const A = B.act; A.t += dt;
+      const a = A.a, s = A.s;
+      if (s.anim === 'melee') {
+        const last = A.times[A.times.length - 1]; let kk;
+        if (A.t < .2) kk = easeOut(A.t / .2); else if (A.t < last + .06) kk = 1; else kk = 1 - clamp((A.t - last - .06) / .3);
+        const L = robotLayout(a, a.S, a.dir);
+        const idx = A.limb === 'leg' ? frontIdx(L, 4, 5, a.dir) : frontIdx(L, 2, 3, a.dir);
+        a.ox = a.dir * 150 * kk;
+        a.ext = { idx, k: kk * (A.n > 1 ? .55 + .45 * Math.abs(Math.sin(A.t * 26)) : 1) };
+      } else if (s.anim === 'shot') {
+        const L = robotLayout(a, a.S, a.dir); const idx = frontIdx(L, 2, 3, a.dir);
+        A.idx = idx;
+        if (s.shot === 'rocket') { a.hide = A.t > .12 && A.t < A.dur - .05 ? idx : null; a.ext = null; }
+        else a.ext = { idx, k: A.t < .5 ? .5 : .5 * (1 - clamp((A.t - .5) / .3)) };
+      } else if (s.anim === 'ult') {
+        const L = robotLayout(a, a.S, a.dir);
+        if (A.t < .95) { const ang = Math.random() * Math.PI * 2, r = rnd(80, 160); B.parts.push({ x: a.x + Math.cos(ang) * r, y: CY + Math.sin(ang) * r, vx: -Math.cos(ang) * r * 2.2, vy: -Math.sin(ang) * r * 2.2, life: .4, max: .4, col: ELEM[a.ultElem].c, sz: 4 }); }
+        a.ext = A.t > .9 && A.t < 1.5 ? { idx: frontIdx(L, 2, 3, a.dir), k: .7 } : null;
+        if (!A.beamS && A.t > .95) { A.beamS = 1; sfx('beam'); B.shake = 10; }
+      }
+      while (A.done < A.times.length && A.t >= A.times[A.done]) {
+        if (a.st.lockon && s.kind === 'atk') A.hitLockon = true;
+        doHit(A, A.done); A.done++;
+      }
+      if (A.t >= A.dur) endAct();
+    } else {
+      for (const f of [p, e]) f.gauge += f.spd * dt * 3.2 * (f.st.spdUp ? 1.4 : 1);
+      const ready = [p, e].filter(f => f.gauge >= 100).sort((x, y) => y.gauge - x.gauge)[0];
+      if (ready) { ready.gauge -= 100; startTurn(ready); }
+    }
+  } else if (B.phase === 'win') {
+    e.dead += dt;
+    if (B.pt > 2.4) { run.stage++; startStage(); }
+  } else if (B.phase === 'lose') {
+    p.dead += dt;
+    if (B.pt > 2.4 && !B.shown) { B.shown = 1; showResult(); }
+  }
+}
+
+function drawFighter(f) {
+  const sx = f.shake ? rnd(-f.shake, f.shake) * .5 : 0;
+  let S = f.S, combine = null, jointA = 1;
+  if (B.phase === 'combine' && f === B.p) {
+    const pt = B.pt;
+    S = f.S * lerp(1.35, 1, easeInOut(clamp((pt - 2.5) / .6)));
+    jointA = clamp((pt - 1.45) / .3);
+    combine = (i, b) => {
+      const k = clamp((pt - .35 - i * .13) / .85), e2 = easeOutBack(k);
+      const ang = i / 6 * Math.PI * 2 - Math.PI / 2;
+      const sx2 = Math.cos(ang) * 270, sy2 = Math.sin(ang) * 175;
+      const sq = Math.max(b.w, b.h) * .75;
+      return Object.assign({}, b, { x: lerp(sx2, b.x, e2), y: lerp(sy2, b.y, e2), r: b.r + (1 - k) * Math.PI * 4, w: lerp(sq, b.w, clamp(k * 1.2)), h: lerp(sq, b.h, clamp(k * 1.2)), ax: b.ax * k, ay: b.ay * k });
+    };
+  }
+  if (f.dead > 1.7) return;
+  drawRobot(ctx, f, f.x + f.ox + sx, CY + f.oy + f.jy, S, {
+    t: B.t + (f.side === 'e' ? 1.3 : 0), dir: f.dir, ext: f.ext, hide: f.hide, flash: f.flash, dead: f.dead, combine, jointA,
+    out: f === B.p && B.phase === 'combine' ? B.out : null
+  });
+  if (f.shield > 0 && !f.dead) {
+    ctx.save(); ctx.globalAlpha = .35 + .15 * Math.sin(B.t * 6); ctx.strokeStyle = '#4dc3ff'; ctx.lineWidth = 3; ctx.fillStyle = 'rgba(77,195,255,.08)';
+    hexPathAt(ctx, f.x + f.ox, CY + f.oy + f.jy, f.S * 2.3); ctx.fill(); ctx.stroke(); ctx.restore();
+  }
+}
+function hexPathAt(c, x, y, r) { c.save(); c.translate(x, y); hexPath(c, r); c.restore(); }
+
+function drawActFX() {
+  const A = B.act; if (!A) return;
+  const a = A.a, d = A.d, s = A.s;
+  if (s.anim === 'shot') {
+    const L = robotLayout(a, a.S, a.dir), p0 = partCenter(L[A.idx == null ? 3 : A.idx]);
+    const x0 = a.x + p0.x, y0 = CY + p0.y, x1 = d.x, y1 = CY - 10;
+    for (let k = 0; k < A.n; k++) {
+      const st = A.times[k] - .33, tt = clamp((A.t - st) / .33);
+      if (A.t < st || A.t > A.times[k]) continue;
+      const arc = s.shot === 'missile' ? Math.sin(tt * Math.PI) * (k - 1) * 90 - Math.sin(tt * Math.PI) * 40 : s.shot === 'quake' ? 0 : -Math.sin(tt * Math.PI) * 20;
+      const x = lerp(x0, x1, tt), y = s.shot === 'quake' ? CY + 70 : lerp(y0, y1, tt) + arc;
+      const col = ELEM[s.elem == null ? 6 : s.elem].c;
+      if (s.shot === 'rocket') {
+        drawPart(ctx, a.chars[A.idx], ELEM[a.elems[A.idx]], { x, y, r: -a.dir * Math.PI / 2, w: L[A.idx].w, h: L[A.idx].h, ax: 0, ay: 0 }, false, 0);
+        B.parts.push({ x: x - a.dir * 20, y, vx: -a.dir * 80, vy: rnd(-20, 20), life: .25, max: .25, col: '#ffb040', sz: 5 });
+      } else if (s.shot === 'quake') {
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = col;
+        for (let j = 0; j < 4; j++) { ctx.globalAlpha = .7 - j * .15; ctx.beginPath(); ctx.moveTo(x - a.dir * j * 30, y); ctx.lineTo(x - a.dir * j * 30 + 12, y - 40 + j * 8); ctx.lineTo(x - a.dir * j * 30 + 24, y); ctx.fill(); }
+        ctx.restore();
+      } else {
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        const r = s.shot === 'missile' ? 7 : 14;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r * 2.2); g.addColorStop(0, '#fff'); g.addColorStop(.4, col); g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 2.2, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+        B.parts.push({ x, y, vx: 0, vy: 0, life: .2, max: .2, col, sz: r * .6 });
+      }
+    }
+  }
+  if (s.anim === 'ult' && A.t > .95 && A.t < 1.5) {
+    const k = clamp((A.t - .95) / .1) * (1 - clamp((A.t - 1.35) / .15));
+    const L = robotLayout(a, a.S, a.dir), p0 = partCenter(L[frontIdx(L, 2, 3, a.dir)]);
+    const x0 = a.x + p0.x + a.dir * a.S, y0 = CY + p0.y, x1 = a.dir > 0 ? W + 40 : -40;
+    const col = ELEM[a.ultElem].c;
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (const [w, c, al] of [[70, col, .35], [42, col, .7], [18, '#ffffff', 1]]) {
+      ctx.globalAlpha = al * k; ctx.strokeStyle = c; ctx.lineWidth = w * (1 + .15 * Math.sin(B.t * 60)); ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y0 + rnd(-3, 3)); ctx.stroke();
+    }
+    ctx.restore();
+    if (Math.random() < .8) B.parts.push({ x: d.x + rnd(-20, 20), y: y0 + rnd(-30, 30), vx: a.dir * rnd(100, 400), vy: rnd(-200, 200), life: .4, max: .4, col, sz: 5 });
+  }
+}
+function drawHUD() {
+  const { p, e } = B;
+  const bar = (f, x, alignR) => {
+    const w = 268, y = 16;
+    txt(ctx, f.name, alignR ? x + w : x, y + 6, 17, '#fff', { a: alignR ? 'right' : 'left', f: FONT, w: 900, lw: 4 });
+    const by = y + 20;
+    ctx.fillStyle = '#05060f'; ctx.fillRect(x, by, w, 16); ctx.strokeStyle = '#4b4f86'; ctx.strokeRect(x, by, w, 16);
+    const r = clamp(f.dispHp / f.maxhp), rr = clamp(f.hp / f.maxhp);
+    ctx.fillStyle = '#ff3d5a'; ctx.fillRect(alignR ? x + w * (1 - r) : x, by, w * r, 16);
+    const g = ctx.createLinearGradient(0, by, 0, by + 16);
+    const c = rr > .5 ? ['#a6ff7a', '#2fbf4a'] : rr > .25 ? ['#ffe27a', '#d9a312'] : ['#ff8a7a', '#c4202f'];
+    g.addColorStop(0, c[0]); g.addColorStop(1, c[1]); ctx.fillStyle = g;
+    ctx.fillRect(alignR ? x + w * (1 - rr) : x, by, w * rr, 16);
+    if (f.shield > 0) { ctx.fillStyle = 'rgba(77,195,255,.7)'; const sw = w * clamp(f.shield / f.maxhp); ctx.fillRect(alignR ? x : x + w - sw, by, sw, 5); }
+    txt(ctx, `${Math.ceil(f.hp)} / ${f.maxhp}`, x + w / 2, by + 8, 12, '#fff', { f: FONT, w: 900, lw: 3 });
+    const ey = by + 21;
+    ctx.fillStyle = '#05060f'; ctx.fillRect(x, ey, w, 7);
+    ctx.fillStyle = f.en >= 100 ? (Math.sin(B.t * 12) > 0 ? '#ffd35a' : '#fff') : '#4de3ff';
+    const ew = w * clamp(f.en / 100); ctx.fillRect(alignR ? x + w - ew : x, ey, ew, 7);
+    txt(ctx, f.en >= 100 ? '必殺 READY' : 'EN', alignR ? x : x + w, ey + 16, 11, f.en >= 100 ? '#ffd35a' : '#7f86c7', { a: alignR ? 'left' : 'right', f: FONT, w: 900, lw: 3 });
+    // statuses
+    const ST = [['burn', '炎上', '#ff5a2a'], ['poison', '毒', '#a24bff'], ['para', 'マヒ', '#d4b000'], ['blind', '暗闇', '#555'], ['atkUp', '攻↑', '#ff6a3d'], ['spdUp', '速↑', '#1fbf9a'], ['defDown', '防↓', '#2a6cff'], ['lockon', '狙', '#ff3d6a']];
+    let ix = alignR ? x + w : x;
+    ctx.font = `900 11px ${FONT}`;
+    for (const [k, n, c2] of ST) if (f.st[k]) {
+      const tw = ctx.measureText(n).width + 10;
+      const bx = alignR ? ix - tw : ix;
+      ctx.fillStyle = c2; ctx.fillRect(bx, ey + 11, tw, 15);
+      txt(ctx, n, bx + tw / 2, ey + 19, 11, '#fff', { f: FONT, w: 900, lw: 0 });
+      ix += alignR ? -(tw + 3) : tw + 3;
+    }
+  };
+  bar(p, 16, false); bar(e, W - 284, true);
+  txt(ctx, `STAGE ${run.stage}`, W / 2, 26, 22, '#fff', { glow: '#ff4dd2' });
+  txt(ctx, `撃破 ${run.wins}`, W / 2, 50, 13, '#ffd35a', { f: FONT, w: 900, lw: 3 });
+  txt(ctx, `${p.type.n}・${ELEM[p.aura].n}`, PX, H - 22, 13, '#9aa0d8', { f: FONT, w: 900, lw: 3 });
+  txt(ctx, `${e.type.n}・${ELEM[e.aura].n}`, EX, H - 22, 13, '#9aa0d8', { f: FONT, w: 900, lw: 3 });
+}
+function drawBattle() {
+  const sx = B.shake ? rnd(-B.shake, B.shake) : 0, sy = B.shake ? rnd(-B.shake, B.shake) : 0;
+  ctx.save(); ctx.translate(sx, sy);
+  drawBG(ctx, W, H, B.t);
+  // shadows
+  for (const f of [B.p, B.e]) {
+    if (f.dead || f.oy < -300) continue;
+    ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.beginPath(); ctx.ellipse(f.x + f.ox, CY + f.S * 1.75, f.S * 1.3, f.S * .28, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  const order = B.act && B.act.a === B.e ? [B.p, B.e] : [B.e, B.p];
+  if (B.phase !== 'combine' || B.pt > 2.4) drawFighter(order[0]);
+  if (B.phase === 'combine') drawFighter(B.p); else drawFighter(order[1]);
+  drawActFX();
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  for (const q of B.parts) {
+    const a = clamp(q.life / q.max); ctx.globalAlpha = a;
+    if (q.ring) { ctx.strokeStyle = q.col; ctx.lineWidth = 4 * a + 1; ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, Math.PI * 2); ctx.stroke(); }
+    else { ctx.fillStyle = q.col; ctx.beginPath(); ctx.arc(q.x, q.y, q.sz * (.5 + a * .5), 0, Math.PI * 2); ctx.fill(); }
+  }
+  ctx.restore();
+  for (const q of B.labels) {
+    const a = clamp(q.life / q.max * 3); ctx.globalAlpha = a;
+    const w = Math.max(140, q.s.length * 17 + 30);
+    ctx.fillStyle = 'rgba(5,6,20,.85)'; ctx.fillRect(q.x - w / 2, q.y - 15, w, 30);
+    ctx.fillStyle = q.col; ctx.fillRect(q.x - w / 2, q.y - 15, 4, 30); ctx.fillRect(q.x + w / 2 - 4, q.y - 15, 4, 30);
+    txt(ctx, q.s, q.x, q.y, 16, '#fff', { f: FONT, w: 900, lw: 3, glow: q.col });
+    ctx.globalAlpha = 1;
+  }
+  for (const q of B.pops) {
+    const a = clamp(q.life / q.max * 2.5), sc = 1 + Math.max(0, (q.life - q.max + .12)) * 4;
+    ctx.globalAlpha = a; txt(ctx, q.s, q.x, q.y, q.size * sc, q.col, { glow: q.col }); ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+  // cutin
+  if (B.cutin) {
+    const c = B.cutin, k = easeOut(clamp(c.t / .25)), out = clamp((c.t - .9) / .2);
+    const dirx = c.side === 'p' ? 1 : -1;
+    ctx.save(); ctx.globalAlpha = 1 - out;
+    ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(0, 0, W, H);
+    ctx.translate(W / 2 + (1 - k) * -dirx * W, H * .45); ctx.transform(1, 0, -.25, 1, 0, 0);
+    const g = ctx.createLinearGradient(-W / 2, 0, W / 2, 0); g.addColorStop(0, c.col); g.addColorStop(.5, '#111'); g.addColorStop(1, c.col);
+    ctx.fillStyle = g; ctx.fillRect(-W / 2 - 60, -46, W + 120, 92);
+    ctx.fillStyle = '#fff'; ctx.fillRect(-W / 2 - 60, -50, W + 120, 4); ctx.fillRect(-W / 2 - 60, 46, W + 120, 4);
+    ctx.setTransform(ctx.getTransform().a, 0, 0, ctx.getTransform().d, ctx.getTransform().e, ctx.getTransform().f);
+    txt(ctx, '必殺', -W / 2 + 110, -26, 18, '#ffd35a', { f: FONT, w: 900 });
+    txt(ctx, c.s + '!!', 0, 4, Math.min(44, 900 / Math.max(8, c.s.length)), '#fff', { glow: c.col });
+    ctx.restore();
+  }
+  // phase texts
+  if (B.phase === 'combine') {
+    if (B.pt < 1.6) txt(ctx, '文字合体!!', W / 2, 70, 44 + Math.sin(B.t * 20) * 2, '#fff', { glow: '#ff4dd2' });
+    if (B.pt > 1.75) {
+      const k = easeOutBack(clamp((B.pt - 1.75) / .4));
+      ctx.save(); ctx.translate(W / 2, H - 70); ctx.scale(k, k);
+      txt(ctx, '合体完了!!', 0, -34, 22, '#ffd35a', { glow: '#ffd35a' });
+      txt(ctx, B.p.name, 0, 8, 44, '#fff', { glow: ELEM[B.p.aura].c });
+      ctx.restore();
+    }
+  }
+  if (B.phase !== 'combine') drawHUD();
+  if (B.phase === 'enter') {
+    const a = clamp(B.pt / .3) * (1 - clamp((B.pt - 1.6) / .3));
+    ctx.globalAlpha = a;
+    if (B.e.boss && Math.sin(B.t * 10) > 0) { ctx.fillStyle = 'rgba(255,0,40,.25)'; ctx.fillRect(0, 0, W, H); }
+    txt(ctx, B.e.boss ? '⚠ WARNING ⚠' : `STAGE ${run.stage}`, W / 2, H / 2 - 30, 50, B.e.boss ? '#ff3d5a' : '#fff', { glow: B.e.boss ? '#ff0030' : '#4de3ff' });
+    txt(ctx, B.e.name, W / 2, H / 2 + 22, 24, '#fff', { f: FONT, w: 900 });
+    ctx.globalAlpha = 1;
+  }
+  if (B.phase === 'fight' && B.pt < .9) txt(ctx, 'FIGHT!!', W / 2, H / 2, 64 * easeOutBack(clamp(B.pt / .3)), '#ffd35a', { glow: '#ff7a00' });
+  if (B.phase === 'win' && B.pt > .5) txt(ctx, 'WIN!!', W / 2, H / 2 - 20, 70 * easeOutBack(clamp((B.pt - .5) / .3)), '#ffd35a', { glow: '#ffae00' });
+  if (B.phase === 'lose' && B.pt > .6) txt(ctx, 'GAME OVER', W / 2, H / 2 - 20, 60, '#ff3d5a', { glow: '#ff0030' });
+  if (B.flashS > 0) { ctx.fillStyle = `rgba(255,255,255,${B.flashS})`; ctx.fillRect(0, 0, W, H); }
+}
+
+/* ================= result & ranking ================= */
+const API = {
+  call(fn, arg) {
+    return new Promise((res, rej) => {
+      if (window.google && google.script && google.script.run) google.script.run.withSuccessHandler(res).withFailureHandler(rej)[fn](arg);
+      else res(LocalAPI[fn](arg));
+    });
+  }
+};
+const LocalAPI = { // used when opened outside GAS
+  getRanking() { try { return JSON.parse(localStorage.getItem('mojirobo_rank') || '[]'); } catch (e) { return []; } },
+  saveScore(d) {
+    const l = this.getRanking(); l.push(Object.assign({}, d, { date: new Date().toLocaleDateString('ja-JP') }));
+    l.sort((a, b) => b.stage - a.stage || a.power - b.power); const r = l.slice(0, 30);
+    try { localStorage.setItem('mojirobo_rank', JSON.stringify(r)); } catch (e) { }
+    return r;
+  }
+};
+function rankTable(list) {
+  if (!list || !list.length) return '<p class="hint" style="text-align:center">まだ記録がありません</p>';
+  return '<table class="rk"><tr><th>#</th><th>パイロット</th><th>ロボ</th><th>到達</th></tr>' + list.map((r, i) =>
+    `<tr><td>${i + 1}</td><td>${esc(r.name)}<br><small style="color:#8d93c7">${esc(r.date || '')}</small></td><td class="c">${esc(r.chars)}<br><small style="font-size:11px;color:#8d93c7;letter-spacing:0">${esc(r.robot || '')}</small></td><td><b>STAGE ${r.stage}</b></td></tr>`).join('') + '</table>';
+}
+function openModal(h) { $('#mbox').innerHTML = h; $('#modal').classList.remove('hidden'); }
+function closeModal() { $('#modal').classList.add('hidden'); }
+function showResult() {
+  const R = run.robot;
+  let pname = ''; try { pname = localStorage.getItem('mojirobo_pilot') || ''; } catch (e) { }
+  openModal(`<h2 style="color:#ff3d5a">GAME OVER</h2>
+    <div class="big">STAGE ${run.stage} まで到達！（撃破 ${run.wins}体）</div>
+    <p style="text-align:center;font-weight:900;font-size:26px;letter-spacing:3px">${esc(R.chars.join(''))}</p>
+    <p style="text-align:center;color:#8d93c7;margin-bottom:12px">${esc(R.name)}（${R.type.n}・ランク${R.rank}）</p>
+    <input id="pname" maxlength="12" placeholder="パイロット名" value="${esc(pname)}">
+    <div class="row"><button id="saveBtn" class="main">ランキング登録</button></div>
+    <div id="rkArea"></div>
+    <div class="row"><button id="againBtn">同じロボで再挑戦</button><button id="backBtn">ロボを作り直す</button></div>`);
+  $('#saveBtn').onclick = async () => {
+    const name = $('#pname').value.trim() || 'ななしパイロット';
+    try { localStorage.setItem('mojirobo_pilot', name); } catch (e) { }
+    $('#saveBtn').disabled = true; $('#saveBtn').textContent = '送信中…';
+    try {
+      const list = await API.call('saveScore', { name, chars: R.chars.join(''), robot: R.name, stage: run.stage, power: R.power });
+      $('#saveBtn').textContent = '登録しました！'; $('#rkArea').innerHTML = rankTable(list);
+    } catch (err) { $('#saveBtn').disabled = false; $('#saveBtn').textContent = '失敗…もう一度'; }
+  };
+  $('#againBtn').onclick = () => { closeModal(); startRun(run.robot); };
+  $('#backBtn').onclick = () => { closeModal(); B = null; $('#battle').classList.remove('active'); $('#build').classList.add('active'); };
+}
+async function showRanking() {
+  openModal('<h2>🏆 RANKING</h2><div id="rkArea"><p class="hint" style="text-align:center">読み込み中…</p></div><div class="row"><button id="clsBtn">とじる</button></div>');
+  $('#clsBtn').onclick = closeModal;
+  try { $('#rkArea').innerHTML = rankTable(await API.call('getRanking')); } catch (e) { $('#rkArea').innerHTML = '<p class="hint">読み込みに失敗しました</p>'; }
+}
+
+/* ================= main loop ================= */
+$('#spdBtn').onclick = () => { speed = speed === 1 ? 2 : speed === 2 ? 4 : 1; $('#spdBtn').textContent = `▶ ×${speed}`; };
+$('#muteBtn').onclick = () => { muted = !muted; $('#muteBtn').textContent = muted ? '🔇' : '🔊'; };
+let last = performance.now(), gt = 0;
+function loop(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now; gt += dt;
+  if (B) {
+    const steps = speed; for (let i = 0; i < steps; i++) updBattle(dt);
+    drawBattle();
+  } else drawPreview(gt);
+  requestAnimationFrame(loop);
+}
+setupBuild();
+fontReady(RANDOM_POOL + ENEMY_POOL + curChars().join('')).then(() => { GM.clear(); onChars(); });
+requestAnimationFrame(loop);
+</script>
+
+<script>
+if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+</script>
+</body>
+</html>
